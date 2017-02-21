@@ -67,6 +67,42 @@ def get_upcoming_events(calendar_id='primary', max_results=10):
         return events
 
 
+def events_from_now(events):
+    """make a new list with events available from now"""
+
+    now = datetime.datetime.now()
+    available_events = []
+
+    for event in events:
+
+        y, mo, d, h, mi, s = extract_datetime(event['start'].get('dateTime'))
+        date_text = y + '/' + mo + '/' + d + " " + h + ':' + mi + ':' + s
+        start_time = datetime.datetime.strptime(date_text, '%Y/%m/%d %H:%M:%S')
+
+        if start_time > now:
+            available_events.append(event)
+
+    return available_events
+
+
+def events_today(events):
+    """make a new list with events available only today"""
+
+    today = datetime.date.today()
+    available_events = []
+
+    for event in events:
+
+        y, mo, d, h, mi, s= extract_datetime(event['start'].get('dateTime'))
+        date_text = y + '/' + mo + '/' + d + " " + h + ':' + mi + ':' + s
+        date = datetime.datetime.strptime(date_text, '%Y/%m/%d %H:%M:%S').date()
+
+        if date == today:
+            available_events.append(event)
+
+    return available_events
+
+
 def extract_datetime(datetime_text):
     ymd, time = datetime_text.split('T')
     year, month, date = ymd.split('-')
@@ -89,7 +125,32 @@ def events2text(calendar_id='primary', max_results=10):
     return text
 
 
+def events2text_custom(events):
+
+    text = ''
+    for event in events:
+        start = event['start'].get('dateTime', event['start'].get('date'))
+        end = event['end'].get('dateTime', event['end'].get('date'))
+        summary = event['summary']
+        sy, smo, sd, sh, smi, ss = extract_datetime(start)
+        ey, emo, ed, eh, emi, es = extract_datetime(end)
+        text += '{}/{} {}:{}〜{}:{} {}\n'.format(smo, sd, sh, smi, eh, emi, summary)
+
+    return text
+
+
+
 if __name__ == '__main__':
     import pprint
-    calendar_id = 'n2guckpa3df7imegmbk3k3r830@group.calendar.google.com'
-    pprint.pprint(get_upcoming_events(calendar_id=calendar_id))
+
+    calendar_ids = {'swordart': 'g9f9k8e0tal8nohjb2bt9eimvo@group.calendar.google.com',
+                    'marianne': 'b5hemoec1ol2uo5omk1pvmqbvc@group.calendar.google.com',
+                    'honnoji': 'k9k5kfnrehfomillqffi1kpe7g@group.calendar.google.com'}
+
+    swordart_events = get_upcoming_events(calendar_id=calendar_ids['swordart'], max_results=100)
+    marianne_events = get_upcoming_events(calendar_id=calendar_ids['marianne'], max_results=100)
+    honnoji_events = get_upcoming_events(calendar_id=calendar_ids['honnoji'], max_results=100)
+
+    #for key in calendar_ids:
+    #pprint.pprint(events_today(get_upcoming_events(calendar_id=calendar_ids['honnoji'])))
+    pprint.pprint(events_from_now(get_upcoming_events(calendar_id=calendar_ids['honnoji'])))
